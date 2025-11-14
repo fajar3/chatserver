@@ -36,7 +36,7 @@ app.get('/api/health', (req, res) => {
 // Socket.IO handler
 socketHandler(io);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3004;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
