@@ -24,9 +24,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/call', callRoutes);
+app.use('/api', authRoutes);
+app.use('/api', chatRoutes);
+app.use('/api', callRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

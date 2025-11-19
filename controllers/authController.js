@@ -91,7 +91,8 @@ const login = async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name,
-        avatar_url: user.avatar_url
+        avatar_url: user.avatar_url,
+        is_online: true
       }
     });
   } catch (error) {

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dual User Call Tester</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f3f3f3;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+    }
+    .phone {
+      width: 48%;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #aaa;
+    }
+    .log {
+      height: 200px;
+      overflow: auto;
+      background: black;
+      color: #0f0;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 7px;
+    }
+    button {
+      padding: 10px;
+      margin-right: 5px;
+      margin-bottom: 10px;
+    }
+    h2 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ====================== USER A ====================== -->
+<div class="phone">
+  <h2>User A</h2>
+
+  <input id="tokenA" placeholder="JWT Token User A">
+  <button onclick="connectA()">Connect</button>
+
+  <h3>Telepon</h3>
+  <input id="callToA" placeholder="User ID yang mau di telpon">
+  <button onclick="callFromA()">Call</button>
+
+  <button onclick="answerA()">Answer</button>
+  <button onclick="rejectA()">Reject</button>
+
+  <h3>Log User A</h3>
+  <pre id="logA" class="log"></pre>
+</div>
+
+<!-- ====================== USER B ====================== -->
+<div class="phone">
+  <h2>User B</h2>
+
+  <input id="tokenB" placeholder="JWT Token User B">
+  <button onclick="connectB()">Connect</button>
+
+  <h3>Telepon</h3>
+  <input id="callToB" placeholder="User ID yang mau di telpon">
+  <button onclick="callFromB()">Call</button>
+
+  <button onclick="answerB()">Answer</button>
+  <button onclick="rejectB()">Reject</button>
+
+  <h3>Log User B</h3>
+  <pre id="logB" class="log"></pre>
+</div>
+
+
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+let socketA, socketB;
+let callA = null, callB = null;
+
+function log(target, msg) {
+    const el = document.getElementById(target);
+    el.textContent += msg + "\n";
+    el.scrollTop = el.scrollHeight;
+}
+
+/* =========================================================
+   USER A
+=========================================================*/
+function connectA() {
+    const token = document.getElementById("tokenA").value;
+
+    socketA = io("http://localhost:3004", {
+        transports: ["websocket"],
+        auth: { token }
+    });
+
+    socketA.on("connect", () => log("logA", "[Connected A] " + socketA.id));
+    socketA.onAny((ev, data) => {
+        log("logA", `[${ev}] ${JSON.stringify(data)}`);
+
+        if (ev === "incoming_call") {
+            callA = data.callId;
+        }
+    });
+}
+
+function callFromA() {
+    const receiverId = document.getElementById("callToA").value;
+
+    socketA.emit("initiate_call", {
+        receiverId,
+        callType: "video",
+        offer: { sdp: "dummy-offer-A" }
+    });
+
+    log("logA", "Calling user " + receiverId);
+}
+
+function answerA() {
+    socketA.emit("answer_call", {
+        callId: callA,
+        callerId: document.getElementById("callToA").value,
+        answer: { sdp: "dummy-answer-A" }
+    });
+    log("logA", "Answered call A");
+}
+
+function rejectA() {
+    socketA.emit("reject_call", {
+        callId: callA,
+        callerId: document.getElementById("callToA").value
+    });
+    log("logA", "Rejected call A");
+}
+
+
+
+/* =========================================================
+   USER B
+=========================================================*/
+function connectB() {
+    const token = document.getElementById("tokenB").value;
+
+    socketB = io("http://localhost:3004", {
+        transports: ["websocket"],
+        auth: { token }
+    });
+
+    socketB.on("connect", () => log("logB", "[Connected B] " + socketB.id));
+    socketB.onAny((ev, data) => {
+        log("logB", `[${ev}] ${JSON.stringify(data)}`);
+
+        if (ev === "incoming_call") {
+            callB = data.callId;
+        }
+    });
+}
+
+function callFromB() {
+    const receiverId = document.getElementById("callToB").value;
+
+    socketB.emit("initiate_call", {
+        receiverId,
+        callType: "video",
+        offer: { sdp: "dummy-offer-B" }
+    });
+
+    log("logB", "Calling user " + receiverId);
+}
+
+function answerB() {
+    socketB.emit("answer_call", {
+        callId: callB,
+        callerId: document.getElementById("callToB").value,
+        answer: { sdp: "dummy-answer-B" }
+    });
+    log("logB", "Answered call B");
+}
+
+function rejectB() {
+    socketB.emit("reject_call", {
+        callId: callB,
+        callerId: document.getElementById("callToB").value
+    });
+    log("logB", "Rejected call B");
+}
+</script>
+
+</body>
+</html>
